@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>协议状态机推断工具 · DFA 合成与演示</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>协议状态机推断工具</h1>
+    <p class="subtitle">从正例 / 反例操作序列合成确定性有限状态机（DFA），比较候选解释，并单步演示状态迁移。纯本地运行，不连接任何真实设备。</p>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- ============ 左栏：输入 ============ -->
+  <section class="col input-col">
+    <div class="card">
+      <h2>1 · 操作字母表</h2>
+      <p class="hint">输入操作符号，用逗号、空格或换行分隔。每个符号在每个状态下有且仅有一个后继。</p>
+      <textarea id="alphabet" rows="2" spellcheck="false">A, B</textarea>
+    </div>
+
+    <div class="card">
+      <h2>2 · 样本序列</h2>
+      <p class="hint">每行一条序列，符号之间用空格分隔；留一个空行（或在下方输入 ε）表示<span class="mono">空序列</span>。</p>
+      <div class="sample-block pos">
+        <h3>正例（最终被接受）</h3>
+        <textarea id="positives" rows="6" spellcheck="false"></textarea>
+      </div>
+      <div class="sample-block neg">
+        <h3>反例（最终被拒绝）</h3>
+        <textarea id="negatives" rows="6" spellcheck="false"></textarea>
+      </div>
+      <div class="row">
+        <button id="addEmptyPos" class="mini">加入空序列正例 ε</button>
+        <button id="addEmptyNeg" class="mini">加入空序列反例 ε</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3 · 搜索设置</h2>
+      <div class="row settings">
+        <label>状态上限（含拒绝汇点）
+          <input type="number" id="maxStates" min="1" max="10" value="6">
+        </label>
+        <label>每规模时间预算 (ms)
+          <input type="number" id="timeLimit" min="1" value="8000">
+        </label>
+      </div>
+      <button id="solveBtn" class="primary">求解最小一致状态机</button>
+      <div id="presetBar" class="presets">
+        <h3>本地示例</h3>
+        <div class="preset-row" id="presetRow"></div>
+      </div>
+    </div>
+
+    <div id="inputError" class="card error-card hidden"></div>
+  </section>
+
+  <!-- ============ 右栏：结果与演示 ============ -->
+  <section class="col result-col">
+    <div id="statusBanner" class="card banner hidden"></div>
+
+    <div id="modelPanel" class="card hidden">
+      <h2>合成结果</h2>
+      <div id="modelMeta"></div>
+      <div id="sizeLog"></div>
+      <h3>状态迁移图</h3>
+      <div id="graph"></div>
+      <h3>转移表</h3>
+      <div id="transTable"></div>
+      <p class="hint" id="sinkNote"></p>
+    </div>
+
+    <div id="comparePanel" class="card hidden">
+      <h2>候选解释比较</h2>
+      <div id="compareBody"></div>
+    </div>
+
+    <div id="unsatPanel" class="card hidden">
+      <h2>无法同时满足的样本</h2>
+      <div id="unsatBody"></div>
+    </div>
+
+    <div id="conflictPanel" class="card hidden">
+      <h2>标注冲突</h2>
+      <div id="conflictBody"></div>
+    </div>
+
+    <div id="stepperPanel" class="card hidden">
+      <h2>序列单步演示</h2>
+      <p class="hint">以下结论均为<span class="warn">模型推断</span>，不代表设备已经验证。</p>
+      <div class="row">
+        <input type="text" id="stepInput" placeholder="如 A B A（留空表示空序列 ε）" spellcheck="false">
+        <button id="stepLoad" class="mini">载入</button>
+      </div>
+      <div class="row">
+        <button id="stepBack" class="mini">← 上一步</button>
+        <button id="stepNext" class="mini">下一步 →</button>
+        <button id="stepReset" class="mini">重置</button>
+        <span id="stepPos" class="mono"></span>
+      </div>
+      <div id="stepGraph"></div>
+      <div id="stepTrace"></div>
+      <div id="stepVerdict"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>
+    约定：状态 0 为起始状态；最后一个状态为固定<span class="mono">拒绝汇点</span>（非接受、所有操作自环），转移缺失统一进入该汇点。
+    “最小”仅指在<span class="mono">本状态上限与汇点约定</span>下，更小的所有规模都已被约束求解器证明无解；
+    超时只表示本次搜索未能证明，<strong>不能当成不存在模型</strong>。未标注序列的接受 / 拒绝仅为模型推断。
+  </p>
+</footer>
+
+<script src="js/sat.js"></script>
+<script src="js/dfa.js"></script>
+<script src="js/synth.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
